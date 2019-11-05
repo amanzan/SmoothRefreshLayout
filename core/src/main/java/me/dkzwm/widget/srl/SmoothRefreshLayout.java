@@ -72,6 +72,7 @@ import me.dkzwm.widget.srl.util.ViewCatcherUtil;
 /** @author dkzwm */
 public class SmoothRefreshLayout extends ViewGroup
         implements NestedScrollingParent3, NestedScrollingChild3 {
+    public static final float ALBERTO_FACTOR = .535f;
     // status
     public static final byte SR_STATUS_INIT = 1;
     public static final byte SR_STATUS_PREPARE = 2;
@@ -797,7 +798,7 @@ public class SmoothRefreshLayout extends ViewGroup
     }
 
     protected void layoutHeaderView(View child) {
-        if (mMode != Constants.MODE_DEFAULT
+        if (mMode != Constants.MODE_DEFAULT && !albertoAddedFlag()
                 || isDisabledRefresh()
                 || child.getMeasuredHeight() == 0) {
             child.layout(0, 0, 0, 0);
@@ -885,7 +886,7 @@ public class SmoothRefreshLayout extends ViewGroup
     }
 
     protected void layoutFooterView(View child, int contentBottom) {
-        if (mMode != Constants.MODE_DEFAULT
+        if (mMode != Constants.MODE_DEFAULT && !albertoAddedFlag()
                 || isDisabledLoadMore()
                 || child.getMeasuredHeight() == 0) {
             child.layout(0, 0, 0, 0);
@@ -1105,7 +1106,7 @@ public class SmoothRefreshLayout extends ViewGroup
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mMode == Constants.MODE_DEFAULT) {
+        if (mMode == Constants.MODE_DEFAULT || albertoAddedFlag()) {
             if (mBackgroundPaint != null
                     && !isEnabledPinContentView()
                     && !mIndicator.isAlreadyHere(IIndicator.START_POS)) {
@@ -1621,7 +1622,7 @@ public class SmoothRefreshLayout extends ViewGroup
      */
     public boolean autoRefresh(@Action int action, boolean smoothScroll) {
         if (mStatus != SR_STATUS_INIT
-                || mMode != Constants.MODE_DEFAULT
+                || mMode != Constants.MODE_DEFAULT && !albertoAddedFlag()
                 || isDisabledPerformRefresh()) {
             return false;
         }
@@ -1699,7 +1700,7 @@ public class SmoothRefreshLayout extends ViewGroup
      */
     public boolean autoLoadMore(@Action int action, boolean smoothScroll) {
         if (mStatus != SR_STATUS_INIT
-                || mMode != Constants.MODE_DEFAULT
+                || mMode != Constants.MODE_DEFAULT && !albertoAddedFlag()
                 || isDisabledPerformLoadMore()) {
             return false;
         }
@@ -2594,7 +2595,7 @@ public class SmoothRefreshLayout extends ViewGroup
         if (!isDisabledLoadMore()
                 && mFooterView == null
                 && sCreator != null
-                && mMode == Constants.MODE_DEFAULT) {
+                && mMode == Constants.MODE_DEFAULT || albertoAddedFlag()) {
             final IRefreshView<IIndicator> footer = sCreator.createFooter(this);
             if (footer != null) {
                 setFooterView(footer);
@@ -4094,7 +4095,7 @@ public class SmoothRefreshLayout extends ViewGroup
         }
         notifyFingerUp();
         if (!mScrollChecker.isPreFling()) {
-            if (mMode == Constants.MODE_DEFAULT
+            if (mMode == Constants.MODE_DEFAULT || albertoAddedFlag()
                     && isEnabledKeepRefreshView()
                     && !(isEnabledNoMoreData() && isMovingFooter())
                     && mStatus != SR_STATUS_COMPLETE) {
@@ -4365,7 +4366,7 @@ public class SmoothRefreshLayout extends ViewGroup
             mIndicatorSetter.setCurrentPos(mIndicator.getCurrentPos());
             return;
         }
-        if (delta > 0 && mMode == Constants.MODE_SCALE && calculateScale() >= mMaxScaleFactor) {
+        if (delta > 0 && mMode == Constants.MODE_SCALE && !albertoAddedFlag() && calculateScale() >= mMaxScaleFactor) {
             return;
         }
         int to = mIndicator.getCurrentPos() + Math.round(delta);
@@ -4397,7 +4398,7 @@ public class SmoothRefreshLayout extends ViewGroup
         final boolean isMovingHeader = isMovingHeader();
         final boolean isMovingFooter = isMovingFooter();
         // leave initiated position or just refresh complete
-        if (mMode == Constants.MODE_DEFAULT
+        if (mMode == Constants.MODE_DEFAULT || albertoAddedFlag()
                         && ((mIndicator.hasJustLeftStartPosition()
                                         || mViewStatus == SR_VIEW_STATUS_INIT)
                                 && mStatus == SR_STATUS_INIT)
@@ -4442,7 +4443,7 @@ public class SmoothRefreshLayout extends ViewGroup
 
     protected boolean offsetChild(int change, boolean isMovingHeader, boolean isMovingFooter) {
         boolean needRequestLayout = false;
-        if (mMode == Constants.MODE_DEFAULT) {
+        if (mMode == Constants.MODE_DEFAULT || albertoAddedFlag()) {
             if (mHeaderView != null
                     && !isDisabledRefresh()
                     && isMovingHeader
@@ -4614,33 +4615,36 @@ public class SmoothRefreshLayout extends ViewGroup
                 if (ScrollCompat.canScaleInternal(mTargetView)) {
                     View view = ((ViewGroup) mTargetView).getChildAt(0);
                     view.setPivotY(0);
-                    view.setScaleY(calculateScale());
+                    albertoMovingHeadercanScaleInternal(view);
                 } else {
                     mTargetView.setPivotY(0);
-                    mTargetView.setScaleY(calculateScale());
-                }
-            } else if (isMovingFooter) {
-                final View targetView;
-                if (mScrollTargetView != null) {
-                    targetView = mScrollTargetView;
-                } else if (mAutoFoundScrollTargetView != null) {
-                    if (ViewCatcherUtil.isViewPager(mAutoFoundScrollTargetView)) {
-                        targetView = (View) mAutoFoundScrollTargetView.getParent();
-                    } else {
-                        targetView = mAutoFoundScrollTargetView;
-                    }
-                } else {
-                    targetView = mTargetView;
-                }
-                if (ScrollCompat.canScaleInternal(targetView)) {
-                    View view = ((ViewGroup) targetView).getChildAt(0);
-                    view.setPivotY(view.getHeight());
-                    view.setScaleY(calculateScale());
-                } else {
-                    targetView.setPivotY(getHeight());
-                    targetView.setScaleY(calculateScale());
+                    albertoMovingHeadercanNotScaleInternal(mTargetView);
                 }
             }
+
+            /* alberto commented part isMovingFooter */
+//            else if (isMovingFooter) {
+//                final View targetView;
+//                if (mScrollTargetView != null) {
+//                    targetView = mScrollTargetView;
+//                } else if (mAutoFoundScrollTargetView != null) {
+//                    if (ViewCatcherUtil.isViewPager(mAutoFoundScrollTargetView)) {
+//                        targetView = (View) mAutoFoundScrollTargetView.getParent();
+//                    } else {
+//                        targetView = mAutoFoundScrollTargetView;
+//                    }
+//                } else {
+//                    targetView = mTargetView;
+//                }
+//                if (ScrollCompat.canScaleInternal(targetView)) {
+//                    View view = ((ViewGroup) targetView).getChildAt(0);
+//                    view.setPivotY(view.getHeight());
+//                    view.setScaleY(calculateScale());
+//                } else {
+//                    targetView.setPivotY(getHeight());
+//                    targetView.setScaleY(calculateScale());
+//                }
+//            }
         }
         return needRequestLayout;
     }
@@ -4655,7 +4659,7 @@ public class SmoothRefreshLayout extends ViewGroup
 
     protected void tryToPerformRefreshWhenMoved() {
         // try to perform refresh
-        if (mMode == Constants.MODE_DEFAULT && mStatus == SR_STATUS_PREPARE && !isAutoRefresh()) {
+        if (mMode == Constants.MODE_DEFAULT || albertoAddedFlag() && mStatus == SR_STATUS_PREPARE && !isAutoRefresh()) {
             // reach fresh height while moving from top to bottom or reach load more height while
             // moving from bottom to top
             if (isHeaderInProcessing() && isMovingHeader() && !isDisabledPerformRefresh()) {
@@ -4684,7 +4688,7 @@ public class SmoothRefreshLayout extends ViewGroup
 
     /** We need to notify the X pos changed */
     protected void updateAnotherDirectionPos() {
-        if (mMode == Constants.MODE_DEFAULT) {
+        if (mMode == Constants.MODE_DEFAULT || albertoAddedFlag()) {
             if (mHeaderView != null
                     && !isDisabledRefresh()
                     && isMovingHeader()
@@ -4725,6 +4729,45 @@ public class SmoothRefreshLayout extends ViewGroup
 
     public boolean isFooterInProcessing() {
         return mViewStatus == SR_VIEW_STATUS_FOOTER_IN_PROCESSING;
+    }
+
+    public void setReboundTopReboundBottomWithFooter(@NonNull IRefreshView footer) {
+        setDisableLoadMore(false);
+        setDisablePerformRefresh(true);
+        setEnableKeepRefreshView(false);
+        IRefreshView header = getHeaderView();
+        if (header != null) {
+            header.getView().setVisibility(View.GONE);
+        }
+        setFooterView(footer);
+        getFooterView().getView().setVisibility(View.VISIBLE);
+        setDurationToClose(550);
+    }
+    public void setReboundTopReboundBottom() {
+        setDisableLoadMore(false);
+        setDisablePerformRefresh(true);
+        setDisablePerformLoadMore(true);
+        setEnableKeepRefreshView(false);
+        IRefreshView header = getHeaderView();
+        if (header != null) {
+            header.getView().setVisibility(View.GONE);
+        }
+        IRefreshView footer = getFooterView();
+        if (footer != null) {
+            footer.getView().setVisibility(View.GONE);
+        }
+    }
+    public void setScaleTopReboundBottom() {
+        setDisableLoadMore(false);
+        setMode(Constants.MODE_SCALE);
+        setDurationToClose(550);
+        Interpolator interpolator = new Interpolator() {
+            @Override
+            public float getInterpolation(float input) {
+                return (float) (--input * input * ((1.7 + 1f) * input + 1.7) + 1f);
+            }
+        };
+        setSpringInterpolator(interpolator);
     }
 
     private void tryToDispatchNestedFling() {
@@ -4778,7 +4821,7 @@ public class SmoothRefreshLayout extends ViewGroup
     }
 
     protected void tryToResetViewsScale() {
-        if (mMode == Constants.MODE_SCALE && mTargetView != null) {
+        if (mMode == Constants.MODE_SCALE && !albertoAddedFlag() && mTargetView != null) {
             resetViewScale(mTargetView);
             if (mScrollTargetView != null) {
                 resetViewScale(mScrollTargetView);
@@ -4795,8 +4838,10 @@ public class SmoothRefreshLayout extends ViewGroup
     }
 
     protected void resetViewScale(View targetView) {
+        albertoResetViewScale(targetView);
         if (ScrollCompat.canScaleInternal(targetView)) {
             View view = ((ViewGroup) targetView).getChildAt(0);
+            albertoResetViewScaleCanScaleInternal(targetView, view);
             view.setPivotY(0);
             view.setScaleY(1);
         } else {
@@ -5005,6 +5050,35 @@ public class SmoothRefreshLayout extends ViewGroup
             }
         }
         return null;
+    }
+
+    private boolean albertoAddedFlag() {
+        return isMovingFooter();
+    }
+
+    private void albertoMovingHeadercanScaleInternal(View view) {
+        view.setPivotX(view.getWidth() / 2);
+        float calculatedScale = calculateScale();
+        view.setScaleY(calculatedScale);
+        view.setScaleX(calculatedScale);
+    }
+
+    private void albertoMovingHeadercanNotScaleInternal(View targetView) {
+        targetView.setPivotX(targetView.getWidth() / 2);
+        float calculatedScale = calculateScale();
+        targetView.setScaleY(calculatedScale);
+        targetView.setScaleX(calculatedScale);
+    }
+
+    private void albertoResetViewScale(View targetView) {
+        targetView.setPivotX(targetView.getWidth() / 2);
+        targetView.setPivotY(0);
+        targetView.setScaleX(1);
+        targetView.setScaleY(1);
+    }
+
+    private void albertoResetViewScaleCanScaleInternal(View targetView, View view) {
+        view.setPivotX(targetView.getWidth() / 2);
     }
 
     /**
@@ -5535,7 +5609,7 @@ public class SmoothRefreshLayout extends ViewGroup
 
         int[] computeScroll(float velocity) {
             // Multiply by a given empirical value
-            velocity = velocity * .535f;
+            velocity = velocity * ALBERTO_FACTOR;//.535f;
             if ($CachedPair == null) $CachedPair = new int[2];
             float deceleration =
                     (float)
