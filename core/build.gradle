@@ -31,6 +31,7 @@ dependencies {
     compileOnly rootProject.ext.libs.recyclerview
     compileOnly rootProject.ext.libs.viewpager
     compileOnly rootProject.ext.libs.design
+    implementation 'me.dkzwm.widget.srl:ext-classics:1.7.0.androidx'
 }
 
 

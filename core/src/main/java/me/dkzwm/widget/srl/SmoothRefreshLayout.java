@@ -62,6 +62,7 @@ import me.dkzwm.widget.srl.annotation.Action;
 import me.dkzwm.widget.srl.annotation.Mode;
 import me.dkzwm.widget.srl.config.Constants;
 import me.dkzwm.widget.srl.extra.IRefreshView;
+import me.dkzwm.widget.srl.extra.footer.ClassicFooter;
 import me.dkzwm.widget.srl.indicator.DefaultIndicator;
 import me.dkzwm.widget.srl.indicator.IIndicator;
 import me.dkzwm.widget.srl.indicator.IIndicatorSetter;
@@ -4743,6 +4744,7 @@ public class SmoothRefreshLayout extends ViewGroup
         getFooterView().getView().setVisibility(View.VISIBLE);
         setDurationToClose(550);
     }
+
     public void setReboundTopReboundBottom() {
         setDisableLoadMore(false);
         setDisablePerformRefresh(true);
@@ -4757,6 +4759,7 @@ public class SmoothRefreshLayout extends ViewGroup
             footer.getView().setVisibility(View.GONE);
         }
     }
+
     public void setScaleTopReboundBottom() {
         setDisableLoadMore(false);
         setMode(Constants.MODE_SCALE);
@@ -4768,6 +4771,12 @@ public class SmoothRefreshLayout extends ViewGroup
             }
         };
         setSpringInterpolator(interpolator);
+    }
+
+    public void setReboundTopPaginateBottom() {
+        ClassicFooter classicFooter = new ClassicFooter(getContext());
+        classicFooter.setLastUpdateTimeKey("footer_last_update_time");
+        setReboundTopReboundBottomWithFooter(classicFooter);
     }
 
     private void tryToDispatchNestedFling() {
