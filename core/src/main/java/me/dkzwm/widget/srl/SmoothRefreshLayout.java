@@ -2596,7 +2596,7 @@ public class SmoothRefreshLayout extends ViewGroup
         if (!isDisabledLoadMore()
                 && mFooterView == null
                 && sCreator != null
-                && mMode == Constants.MODE_DEFAULT || albertoAddedFlag()) {
+                && (mMode == Constants.MODE_DEFAULT || albertoAddedFlag())) {
             final IRefreshView<IIndicator> footer = sCreator.createFooter(this);
             if (footer != null) {
                 setFooterView(footer);
@@ -4096,7 +4096,7 @@ public class SmoothRefreshLayout extends ViewGroup
         }
         notifyFingerUp();
         if (!mScrollChecker.isPreFling()) {
-            if (mMode == Constants.MODE_DEFAULT || albertoAddedFlag()
+            if ((mMode == Constants.MODE_DEFAULT || albertoAddedFlag()) // keep an eye on this parenthesis
                     && isEnabledKeepRefreshView()
                     && !(isEnabledNoMoreData() && isMovingFooter())
                     && mStatus != SR_STATUS_COMPLETE) {
@@ -4367,7 +4367,7 @@ public class SmoothRefreshLayout extends ViewGroup
             mIndicatorSetter.setCurrentPos(mIndicator.getCurrentPos());
             return;
         }
-        if (delta > 0 && mMode == Constants.MODE_SCALE && !albertoAddedFlag() && calculateScale() >= mMaxScaleFactor) {
+        if (delta > 0 && (mMode == Constants.MODE_SCALE && !albertoAddedFlag()) && calculateScale() >= mMaxScaleFactor) {
             return;
         }
         int to = mIndicator.getCurrentPos() + Math.round(delta);
@@ -4399,7 +4399,7 @@ public class SmoothRefreshLayout extends ViewGroup
         final boolean isMovingHeader = isMovingHeader();
         final boolean isMovingFooter = isMovingFooter();
         // leave initiated position or just refresh complete
-        if (mMode == Constants.MODE_DEFAULT || albertoAddedFlag()
+        if ((mMode == Constants.MODE_DEFAULT || albertoAddedFlag())
                         && ((mIndicator.hasJustLeftStartPosition()
                                         || mViewStatus == SR_VIEW_STATUS_INIT)
                                 && mStatus == SR_STATUS_INIT)
@@ -4660,7 +4660,7 @@ public class SmoothRefreshLayout extends ViewGroup
 
     protected void tryToPerformRefreshWhenMoved() {
         // try to perform refresh
-        if (mMode == Constants.MODE_DEFAULT || albertoAddedFlag() && mStatus == SR_STATUS_PREPARE && !isAutoRefresh()) {
+        if ((mMode == Constants.MODE_DEFAULT || albertoAddedFlag()) && mStatus == SR_STATUS_PREPARE && !isAutoRefresh()) {
             // reach fresh height while moving from top to bottom or reach load more height while
             // moving from bottom to top
             if (isHeaderInProcessing() && isMovingHeader() && !isDisabledPerformRefresh()) {
@@ -4830,7 +4830,7 @@ public class SmoothRefreshLayout extends ViewGroup
     }
 
     protected void tryToResetViewsScale() {
-        if (mMode == Constants.MODE_SCALE && !albertoAddedFlag() && mTargetView != null) {
+        if ((mMode == Constants.MODE_SCALE && !albertoAddedFlag()) && mTargetView != null) {
             resetViewScale(mTargetView);
             if (mScrollTargetView != null) {
                 resetViewScale(mScrollTargetView);
